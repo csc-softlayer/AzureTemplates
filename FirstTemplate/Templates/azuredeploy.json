@@ -1,0 +1,173 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "mystorageType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
+        },
+        "mywindowsvmName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "mywindowsvmAdminUserName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "mywindowsvmAdminPassword": {
+            "type": "securestring"
+        },
+        "mywindowsvmWindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
+        }
+    },
+    "variables": {
+        "mystorageName": "[concat('mystorage', uniqueString(resourceGroup().id))]",
+        "myvlanPrefix": "10.0.0.0/16",
+        "myvlanSubnet1Name": "Subnet-1",
+        "myvlanSubnet1Prefix": "10.0.0.0/24",
+        "myvlanSubnet2Name": "Subnet-2",
+        "myvlanSubnet2Prefix": "10.0.1.0/24",
+        "mywindowsvmImagePublisher": "MicrosoftWindowsServer",
+        "mywindowsvmImageOffer": "WindowsServer",
+        "mywindowsvmOSDiskName": "mywindowsvmOSDisk",
+        "mywindowsvmVmSize": "Standard_D2_v2",
+        "mywindowsvmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'myvlan')]",
+        "mywindowsvmSubnetRef": "[concat(variables('mywindowsvmVnetID'), '/subnets/', variables('myvlanSubnet1Name'))]",
+        "mywindowsvmStorageAccountContainerName": "vhds",
+        "mywindowsvmNicName": "[concat(parameters('mywindowsvmName'), 'NetworkInterface')]"
+    },
+    "resources": [
+        {
+            "name": "[variables('mystorageName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "mystorage"
+            },
+            "properties": {
+                "accountType": "[parameters('mystorageType')]"
+            }
+        },
+        {
+            "name": "myvlan",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "myvlan"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('myvlanPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('myvlanSubnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('myvlanSubnet1Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('myvlanSubnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('myvlanSubnet2Prefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('mywindowsvmNicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'myvlan')]"
+            ],
+            "tags": {
+                "displayName": "mywindowsvmNic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('mywindowsvmSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('mywindowsvmName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('mystorageName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('mywindowsvmNicName'))]"
+            ],
+            "tags": {
+                "displayName": "mywindowsvm"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('mywindowsvmVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('mywindowsvmName')]",
+                    "adminUsername": "[parameters('mywindowsvmAdminUsername')]",
+                    "adminPassword": "[parameters('mywindowsvmAdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('mywindowsvmImagePublisher')]",
+                        "offer": "[variables('mywindowsvmImageOffer')]",
+                        "sku": "[parameters('mywindowsvmWindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "mywindowsvmOSDisk",
+                        "vhd": {
+                            "uri": "[concat('https://', variables('mystorageName'), '.blob.core.windows.net/', variables('mywindowsvmStorageAccountContainerName'), '/', variables('mywindowsvmOSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('mywindowsvmNicName'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
