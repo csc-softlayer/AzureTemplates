@@ -42,6 +42,8 @@
         "myvlanSubnet1Prefix": "10.0.0.0/24",
         "myvlanSubnet2Name": "Subnet-2",
         "myvlanSubnet2Prefix": "10.0.1.0/24",
+        "myvlanSubnet3Name": "Subnet-3",
+        "myvlanSubnet3Prefix": "10.0.2.0/24",
         "mywindowsvmImagePublisher": "MicrosoftWindowsServer",
         "mywindowsvmImageOffer": "WindowsServer",
         "mywindowsvmOSDiskName": "mywindowsvmOSDisk",
@@ -91,6 +93,12 @@
                         "name": "[variables('myvlanSubnet2Name')]",
                         "properties": {
                             "addressPrefix": "[variables('myvlanSubnet2Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('myvlanSubnet3Name')]",
+                        "properties": { 
+                            "addressPrefix": "[variables('myvlanSubnet3Prefix')]"
                         }
                     }
                 ]
