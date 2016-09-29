@@ -1,0 +1,431 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "webstorageaccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
+        },
+        "appstorageaccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
+        },
+        "dbstorageaccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
+        },
+        "webVMName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "webVMAdminUserName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "webVMAdminPassword": {
+            "type": "securestring"
+        },
+        "webVMWindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
+        },
+        "appVMName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "appVMAdminUserName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "appVMAdminPassword": {
+            "type": "securestring"
+        },
+        "appVMWindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
+        },
+        "dbVMName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "dbVMAdminUserName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "dbVMAdminPassword": {
+            "type": "securestring"
+        },
+        "dbVMWindowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ]
+        }
+    },
+    "variables": {
+        "webstorageaccountName": "[concat('webstorageaccount', uniqueString(resourceGroup().id))]",
+        "appstorageaccountName": "[concat('appstorageaccount', uniqueString(resourceGroup().id))]",
+        "dbstorageaccountName": "[concat('dbstorageaccount', uniqueString(resourceGroup().id))]",
+        "mainVlanPrefix": "10.0.0.0/16",
+        "mainVlanSubnet1Name": "Subnet-1",
+        "mainVlanSubnet1Prefix": "10.0.0.0/24",
+        "mainVlanSubnet2Name": "Subnet-2",
+        "mainVlanSubnet2Prefix": "10.0.1.0/24",
+        "mainVlanSubnet3Name": "Subnet-3",
+        "mainVlanSubnet3Prefix": "10.0.2.0/24",
+        "webVMImagePublisher": "MicrosoftWindowsServer",
+        "webVMImageOffer": "WindowsServer",
+        "webVMOSDiskName": "webVMOSDisk",
+        "webVMVmSize": "Standard_D2_v2",
+        "webVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'mainVlan')]",
+        "webVMSubnetRef": "[concat(variables('webVMVnetID'), '/subnets/', variables('mainVlanSubnet1Name'))]",
+        "webVMStorageAccountContainerName": "vhds",
+        "webVMNicName": "[concat(parameters('webVMName'), 'NetworkInterface')]",
+        "appVMImagePublisher": "MicrosoftWindowsServer",
+        "appVMImageOffer": "WindowsServer",
+        "appVMOSDiskName": "appVMOSDisk",
+        "appVMVmSize": "Standard_D2_v2",
+        "appVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'mainVlan')]",
+        "appVMSubnetRef": "[concat(variables('appVMVnetID'), '/subnets/', variables('mainVlanSubnet2Name'))]",
+        "appVMStorageAccountContainerName": "vhds",
+        "appVMNicName": "[concat(parameters('appVMName'), 'NetworkInterface')]",
+        "dbVMImagePublisher": "MicrosoftWindowsServer",
+        "dbVMImageOffer": "WindowsServer",
+        "dbVMOSDiskName": "dbVMOSDisk",
+        "dbVMVmSize": "Standard_D2_v2",
+        "dbVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'mainVlan')]",
+        "dbVMSubnetRef": "[concat(variables('dbVMVnetID'), '/subnets/', variables('mainVlanSubnet3Name'))]",
+        "dbVMStorageAccountContainerName": "vhds",
+        "dbVMNicName": "[concat(parameters('dbVMName'), 'NetworkInterface')]"
+    },
+    "resources": [
+        {
+            "name": "[variables('webstorageaccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "webstorageaccount"
+            },
+            "properties": {
+                "accountType": "[parameters('webstorageaccountType')]"
+            }
+        },
+        {
+            "name": "[variables('appstorageaccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "appstorageaccount"
+            },
+            "properties": {
+                "accountType": "[parameters('appstorageaccountType')]"
+            }
+        },
+        {
+            "name": "[variables('dbstorageaccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "dbstorageaccount"
+            },
+            "properties": {
+                "accountType": "[parameters('dbstorageaccountType')]"
+            }
+        },
+        {
+            "name": "mainVlan",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "mainVlan"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('mainVlanPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('mainVlanSubnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('mainVlanSubnet1Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('mainVlanSubnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('mainVlanSubnet2Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('mainVlanSubnet3Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('mainVlanSubnet3Prefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('webVMNicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'mainVlan')]"
+            ],
+            "tags": {
+                "displayName": "webVMNic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('webVMSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('webVMName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('webstorageaccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('webVMNicName'))]"
+            ],
+            "tags": {
+                "displayName": "webVM"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('webVMVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('webVMName')]",
+                    "adminUsername": "[parameters('webVMAdminUsername')]",
+                    "adminPassword": "[parameters('webVMAdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('webVMImagePublisher')]",
+                        "offer": "[variables('webVMImageOffer')]",
+                        "sku": "[parameters('webVMWindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "webVMOSDisk",
+                        "vhd": {
+                            "uri": "[concat('https://', variables('webstorageaccountName'), '.blob.core.windows.net/', variables('webVMStorageAccountContainerName'), '/', variables('webVMOSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('webVMNicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[variables('appVMNicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'mainVlan')]"
+            ],
+            "tags": {
+                "displayName": "appVMNic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('appVMSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('appVMName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('appstorageaccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('appVMNicName'))]"
+            ],
+            "tags": {
+                "displayName": "appVM"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('appVMVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('appVMName')]",
+                    "adminUsername": "[parameters('appVMAdminUsername')]",
+                    "adminPassword": "[parameters('appVMAdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('appVMImagePublisher')]",
+                        "offer": "[variables('appVMImageOffer')]",
+                        "sku": "[parameters('appVMWindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "appVMOSDisk",
+                        "vhd": {
+                            "uri": "[concat('https://', variables('appstorageaccountName'), '.blob.core.windows.net/', variables('appVMStorageAccountContainerName'), '/', variables('appVMOSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('appVMNicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[variables('dbVMNicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'mainVlan')]"
+            ],
+            "tags": {
+                "displayName": "dbVMNic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('dbVMSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('dbVMName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('dbstorageaccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('dbVMNicName'))]"
+            ],
+            "tags": {
+                "displayName": "dbVM"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('dbVMVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('dbVMName')]",
+                    "adminUsername": "[parameters('dbVMAdminUsername')]",
+                    "adminPassword": "[parameters('dbVMAdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('dbVMImagePublisher')]",
+                        "offer": "[variables('dbVMImageOffer')]",
+                        "sku": "[parameters('dbVMWindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "dbVMOSDisk",
+                        "vhd": {
+                            "uri": "[concat('https://', variables('dbstorageaccountName'), '.blob.core.windows.net/', variables('dbVMStorageAccountContainerName'), '/', variables('dbVMOSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('dbVMNicName'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
