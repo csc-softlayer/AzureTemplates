@@ -2,7 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "webstorageaccountType": {
+        "webstorageType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
             "allowedValues": [
@@ -13,7 +13,7 @@
                 "Premium_LRS"
             ]
         },
-        "appstorageaccountType": {
+        "appstorageType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
             "allowedValues": [
@@ -24,7 +24,7 @@
                 "Premium_LRS"
             ]
         },
-        "dbstorageaccountType": {
+        "dbstorageType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
             "allowedValues": [
@@ -100,9 +100,9 @@
         }
     },
     "variables": {
-        "webstorageaccountName": "[concat('webstorageaccount', uniqueString(resourceGroup().id))]",
-        "appstorageaccountName": "[concat('appstorageaccount', uniqueString(resourceGroup().id))]",
-        "dbstorageaccountName": "[concat('dbstorageaccount', uniqueString(resourceGroup().id))]",
+        "webstorageName": "[concat('webstorage', uniqueString(resourceGroup().id))]",
+        "appstorageName": "[concat('appstorage', uniqueString(resourceGroup().id))]",
+        "dbstorageName": "[concat('dbstorage', uniqueString(resourceGroup().id))]",
         "mainVlanPrefix": "10.0.0.0/16",
         "mainVlanSubnet1Name": "Subnet-1",
         "mainVlanSubnet1Prefix": "10.0.0.0/24",
@@ -137,42 +137,42 @@
     },
     "resources": [
         {
-            "name": "[variables('webstorageaccountName')]",
+            "name": "[variables('webstorageName')]",
             "type": "Microsoft.Storage/storageAccounts",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [ ],
             "tags": {
-                "displayName": "webstorageaccount"
+                "displayName": "webstorage"
             },
             "properties": {
-                "accountType": "[parameters('webstorageaccountType')]"
+                "accountType": "[parameters('webstorageType')]"
             }
         },
         {
-            "name": "[variables('appstorageaccountName')]",
+            "name": "[variables('appstorageName')]",
             "type": "Microsoft.Storage/storageAccounts",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [ ],
             "tags": {
-                "displayName": "appstorageaccount"
+                "displayName": "appstorage"
             },
             "properties": {
-                "accountType": "[parameters('appstorageaccountType')]"
+                "accountType": "[parameters('appstorageType')]"
             }
         },
         {
-            "name": "[variables('dbstorageaccountName')]",
+            "name": "[variables('dbstorageName')]",
             "type": "Microsoft.Storage/storageAccounts",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [ ],
             "tags": {
-                "displayName": "dbstorageaccount"
+                "displayName": "dbstorage"
             },
             "properties": {
-                "accountType": "[parameters('dbstorageaccountType')]"
+                "accountType": "[parameters('dbstorageType')]"
             }
         },
         {
@@ -243,7 +243,7 @@
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('webstorageaccountName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('webstorageName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('webVMNicName'))]"
             ],
             "tags": {
@@ -268,7 +268,7 @@
                     "osDisk": {
                         "name": "webVMOSDisk",
                         "vhd": {
-                            "uri": "[concat('https://', variables('webstorageaccountName'), '.blob.core.windows.net/', variables('webVMStorageAccountContainerName'), '/', variables('webVMOSDiskName'), '.vhd')]"
+                            "uri": "[concat('https://', variables('webstorageName'), '.blob.core.windows.net/', variables('webVMStorageAccountContainerName'), '/', variables('webVMOSDiskName'), '.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -314,7 +314,7 @@
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('appstorageaccountName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('appstorageName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('appVMNicName'))]"
             ],
             "tags": {
@@ -339,7 +339,7 @@
                     "osDisk": {
                         "name": "appVMOSDisk",
                         "vhd": {
-                            "uri": "[concat('https://', variables('appstorageaccountName'), '.blob.core.windows.net/', variables('appVMStorageAccountContainerName'), '/', variables('appVMOSDiskName'), '.vhd')]"
+                            "uri": "[concat('https://', variables('appstorageName'), '.blob.core.windows.net/', variables('appVMStorageAccountContainerName'), '/', variables('appVMOSDiskName'), '.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -385,7 +385,7 @@
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('dbstorageaccountName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('dbstorageName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('dbVMNicName'))]"
             ],
             "tags": {
@@ -410,7 +410,7 @@
                     "osDisk": {
                         "name": "dbVMOSDisk",
                         "vhd": {
-                            "uri": "[concat('https://', variables('dbstorageaccountName'), '.blob.core.windows.net/', variables('dbVMStorageAccountContainerName'), '/', variables('dbVMOSDiskName'), '.vhd')]"
+                            "uri": "[concat('https://', variables('dbstorageName'), '.blob.core.windows.net/', variables('dbVMStorageAccountContainerName'), '/', variables('dbVMOSDiskName'), '.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
