@@ -1,4 +1,4 @@
-﻿{
+{
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
@@ -33,6 +33,28 @@
                 "2012-R2-Datacenter",
                 "Windows-Server-Technical-Preview"
             ]
+        },
+        "mystorage2Type": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
+        },
+        "mystorage3Type": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
         }
     },
     "variables": {
@@ -51,7 +73,9 @@
         "mywindowsvmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'myvlan')]",
         "mywindowsvmSubnetRef": "[concat(variables('mywindowsvmVnetID'), '/subnets/', variables('myvlanSubnet1Name'))]",
         "mywindowsvmStorageAccountContainerName": "vhds",
-        "mywindowsvmNicName": "[concat(parameters('mywindowsvmName'), 'NetworkInterface')]"
+        "mywindowsvmNicName": "[concat(parameters('mywindowsvmName'), 'NetworkInterface')]",
+        "mystorage2Name": "[concat('mystorage2', uniqueString(resourceGroup().id))]",
+        "mystorage3Name": "[concat('mystorage3', uniqueString(resourceGroup().id))]"
     },
     "resources": [
         {
@@ -59,7 +83,7 @@
             "type": "Microsoft.Storage/storageAccounts",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
-            "dependsOn": [ ],
+            "dependsOn": [],
             "tags": {
                 "displayName": "mystorage"
             },
@@ -72,7 +96,7 @@
             "type": "Microsoft.Network/virtualNetworks",
             "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
-            "dependsOn": [ ],
+            "dependsOn": [],
             "tags": {
                 "displayName": "myvlan"
             },
@@ -97,7 +121,7 @@
                     },
                     {
                         "name": "[variables('myvlanSubnet3Name')]",
-                        "properties": { 
+                        "properties": {
                             "addressPrefix": "[variables('myvlanSubnet3Prefix')]"
                         }
                     }
@@ -174,8 +198,33 @@
                     ]
                 }
             }
+        },
+        {
+            "name": "[variables('mystorage2Name')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "mystorage2"
+            },
+            "properties": {
+                "accountType": "[parameters('mystorage2Type')]"
+            }
+        },
+        {
+            "name": "[variables('mystorage3Name')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "mystorage3"
+            },
+            "properties": {
+                "accountType": "[parameters('mystorage3Type')]"
+            }
         }
     ],
-    "outputs": {
-    }
+    "outputs": {}
 }
