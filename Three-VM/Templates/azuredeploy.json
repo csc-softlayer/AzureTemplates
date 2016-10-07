@@ -97,6 +97,27 @@
                 "2012-R2-Datacenter",
                 "Windows-Server-Technical-Preview"
             ]
+        },
+        "webNSGName": {
+            "type": "string",
+            "defaultValue": "WEB_NSG",
+            "metadata": {
+                "description": "Network Security Group assigned to the Web subnet"
+            }
+        },
+        "appNSGName": {
+            "type": "string",
+            "defaultValue": "APP_NSG",
+            "metadata": {
+                "description": "Network Security Group assigned to the App subnet"
+            }
+        },
+        "dbNSGName": {
+            "type": "string",
+            "defaultValue": "DB_NSG",
+            "metadata": {
+                "description": "Network Security Group assigned to the Database subnet"
+            }
         }
     },
     "variables": {
@@ -194,19 +215,28 @@
                     {
                         "name": "[variables('mainVlanSubnet1Name')]",
                         "properties": {
-                            "addressPrefix": "[variables('mainVlanSubnet1Prefix')]"
+                            "addressPrefix": "[variables('mainVlanSubnet1Prefix')]",
+                            "networkSecurityGroup": { 
+                                "id": "resourceId('Microsoft.Network/networkSecurityGroups', parameters('webNSGName'))"
+                            }
                         }
                     },
                     {
                         "name": "[variables('mainVlanSubnet2Name')]",
                         "properties": {
-                            "addressPrefix": "[variables('mainVlanSubnet2Prefix')]"
+                            "addressPrefix": "[variables('mainVlanSubnet2Prefix')]",
+                            "networkSecurityGroup": { 
+                                "id": "resourceId('Microsoft.Network/networkSecurityGroups', parameters('appNSGName'))"
+                            }
                         }
                     },
                     {
                         "name": "[variables('mainVlanSubnet3Name')]",
                         "properties": {
-                            "addressPrefix": "[variables('mainVlanSubnet3Prefix')]"
+                            "addressPrefix": "[variables('mainVlanSubnet3Prefix')]",
+                            "networkSecurityGroup": { 
+                                "id": "resourceId('Microsoft.Network/networkSecurityGroups', parameters('dbNSGName'))"
+                            }
                         }
                     }
                 ]
@@ -423,6 +453,39 @@
                         }
                     ]
                 }
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('webNSGName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('appNSGName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('dbNSGName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+
+                ]
             }
         }
     ],
